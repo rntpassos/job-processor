@@ -52,7 +52,7 @@ curl http://localhost:5000/api/jobs/{id}
 
 ## Observability
 
-- **Structured logs**: Serilog writes JSON-structured logs to stdout. Collected by your log aggregator.
+- **Structured logs**: Serilog writes structured, human-readable logs to stdout, suitable for collection by your log aggregator.
 - **Distributed tracing**: OpenTelemetry traces exported via OTLP to Jaeger (`http://localhost:16686`).
 - **Metrics**: `prometheus-net` exposes a `/metrics` endpoint scraped by Prometheus. View dashboards at `http://localhost:9090`.
 
