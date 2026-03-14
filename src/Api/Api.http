@@ -1,0 +1,18 @@
+@Api_HostAddress = http://localhost:5000
+
+### Create a job
+POST {{Api_HostAddress}}/api/jobs
+Content-Type: application/json
+
+{
+  "jobType": "ImportCsv",
+  "payload": "{\"file\": \"data.csv\"}"
+}
+
+###
+
+### Get job status (replace the GUID with an actual job ID)
+GET {{Api_HostAddress}}/api/jobs/00000000-0000-0000-0000-000000000000
+Accept: application/json
+
+###
