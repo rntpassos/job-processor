@@ -40,8 +40,14 @@ builder.Services.AddMassTransit(x =>
         var host = builder.Configuration["RABBITMQ__HOST"] ?? "localhost";
         var user = builder.Configuration["RABBITMQ__USER"] ?? "guest";
         var pass = builder.Configuration["RABBITMQ__PASSWORD"] ?? "guest";
+        var portValue = builder.Configuration["RABBITMQ__PORT"];
+        ushort port = 5672;
+        if (!string.IsNullOrEmpty(portValue) && ushort.TryParse(portValue, out var parsedPort))
+        {
+            port = parsedPort;
+        }
 
-        cfg.Host(host, "/", h =>
+        cfg.Host(host, port, "/", h =>
         {
             h.Username(user);
             h.Password(pass);
