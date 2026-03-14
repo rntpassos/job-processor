@@ -18,8 +18,16 @@ builder.Services.AddSerilog((services, config) =>
           .Enrich.FromLogContext()
           .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"));
 
+var connectionString = builder.Configuration.GetConnectionString("Default");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "The connection string 'ConnectionStrings:Default' is not configured. " +
+        "Please set the 'ConnectionStrings__Default' environment variable or add it to appsettings.");
+}
+
 builder.Services.AddDbContext<JobDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IJobRepository, JobRepository>();
 
