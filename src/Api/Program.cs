@@ -22,8 +22,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var connectionString = builder.Configuration.GetConnectionString("Default");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Database connection string 'ConnectionStrings:Default' is not configured. " +
+        "Please configure it in appsettings.json, environment variables, or another configuration source.");
+}
+
 builder.Services.AddDbContext<JobDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IJobRepository, JobRepository>();
 
@@ -48,7 +56,7 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("Default")!, name: "postgres");
+    .AddNpgSql(connectionString, name: "postgres");
 
 var otelEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? "http://localhost:4317";
 builder.Services.AddOpenTelemetry()
