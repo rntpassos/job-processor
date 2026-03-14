@@ -59,6 +59,7 @@ services:
       dockerfile: Worker/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Development
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=jobsdb;Username=postgres;Password=postgres"
       RABBITMQ__HOST: rabbitmq
       RABBITMQ__USER: guest
