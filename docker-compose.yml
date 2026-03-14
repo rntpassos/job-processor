@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: jobsdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  prometheus:
+    image: prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  api:
+    build:
+      context: ./src
+      dockerfile: Api/Dockerfile
+    ports:
+      - "5000:80"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=jobsdb;Username=postgres;Password=postgres"
+      RABBITMQ__HOST: rabbitmq
+      RABBITMQ__USER: guest
+      RABBITMQ__PASSWORD: guest
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+    depends_on:
+      - postgres
+      - rabbitmq
+      - jaeger
+
+  worker:
+    build:
+      context: ./src
+      dockerfile: Worker/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=jobsdb;Username=postgres;Password=postgres"
+      RABBITMQ__HOST: rabbitmq
+      RABBITMQ__USER: guest
+      RABBITMQ__PASSWORD: guest
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+    depends_on:
+      - postgres
+      - rabbitmq
+      - jaeger
+
+volumes:
+  postgres_data:
