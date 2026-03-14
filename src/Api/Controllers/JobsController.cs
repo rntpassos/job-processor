@@ -39,11 +39,30 @@ public class JobsController : ControllerBase
         await _repository.AddAsync(job);
         await _repository.SaveChangesAsync();
 
-        await _bus.Publish(new EnqueueJobCommand(job.Id, job.Type, job.Payload), ct);
+        try
+        {
+            await _bus.Publish(new EnqueueJobCommand(job.Id, job.Type, job.Payload), ct);
 
-        _logger.LogInformation("Job {JobId} created and enqueued", job.Id);
+            _logger.LogInformation("Job {JobId} created and enqueued", job.Id);
 
-        return AcceptedAtAction(nameof(GetJob), new { id = job.Id }, new { jobId = job.Id });
+            return AcceptedAtAction(nameof(GetJob), new { id = job.Id }, new { jobId = job.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to enqueue job {JobId}", job.Id);
+
+            job.Status = "EnqueueFailed";
+            job.LastError = ex.Message;
+            await _repository.SaveChangesAsync();
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new
+                {
+                    jobId = job.Id,
+                    error = "Job was persisted but failed to enqueue to the message bus."
+                });
+        }
     }
 
     [HttpGet("{id:guid}")]
